@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPT+z Pulse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Using Phosphor Icons for a clean, pro look -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js for Modal Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="top-bar">
+            <div class="logo-section">
+                <img src="https://optz.com.br/wp-content/uploads/2021/05/cropped-logo-grande-110x22.png" alt="OPT+z"
+                    class="app-logo">
+                <span class="product-badge">Pulse</span>
+            </div>
+
+            <div class="header-controls">
+                <div class="view-controls">
+                    <button id="toggleConsolidatedBtn" class="icon-btn" title="Expandir/Retrair Visão Geral">
+                        <i class="ph ph-caret-up"></i>
+                    </button>
+                    <div class="month-selector">
+                        <i class="ph ph-calendar-blank"></i>
+                        <select id="globalMonthFilter">
+                            <option value="0">Janeiro</option>
+                            <option value="1">Fevereiro</option>
+                            <option value="2">Março</option>
+                            <option value="3">Abril</option>
+                            <option value="4">Maio</option>
+                            <option value="5">Junho</option>
+                            <option value="6">Julho</option>
+                            <option value="7">Agosto</option>
+                            <option value="8">Setembro</option>
+                            <option value="9">Outubro</option>
+                            <option value="10">Novembro</option>
+                            <option value="11" selected>Dezembro</option>
+                        </select>
+                        <select id="globalYearFilter">
+                            <option value="2025" selected>2025</option>
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+                    <div class="user-profile">
+                        <div class="avatar">CS</div>
+                    </div>
+                </div>
+        </header>
+
+        <main class="dashboard-content">
+            <!-- Top Section: KPIs + Charts -->
+            <div class="top-row-container" id="consolidatedSection">
+                <!-- KPI Sidebar -->
+                <div class="kpi-grid">
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="ph-fill ph-user-circle"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Motoristas</span>
+                            <span class="card-value" id="kpiDrivers">0</span>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="ph-fill ph-bus"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Veículos</span>
+                            <span class="card-value" id="kpiVehicles">0</span>
+                        </div>
+                    </div>
+                    <div class="summary-card highlight">
+                        <div class="card-icon"><i class="ph-fill ph-airplane-tilt"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Viagens</span>
+                            <span class="card-value" id="kpiTrips">0</span>
+                            <span class="card-trend" id="kpiTripsTrend">--</span>
+                        </div>
+                    </div>
+                    <!-- Ratios -->
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="ph ph-bus"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Viagens/Veíc</span>
+                            <span class="card-value" id="kpiVehPerTrip">0.00</span>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="ph ph-users-three"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Viagens/Trip</span>
+                            <span class="card-value" id="kpiCrewPerTrip">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Area -->
+                <div class="charts-row">
+                    <div class="consolidated-chart-container">
+                        <div class="chart-header-row">
+                            <h4><i class="ph ph-chart-line-up"></i> Utilização (%)</h4>
+                            <div class="chart-controls">
+                                <button class="chart-toggle-btn active" data-mode="consolidated">Geral</button>
+                                <button class="chart-toggle-btn" data-mode="companies">Empresa</button>
+                                <button class="chart-toggle-btn hidden" id="openChartFilterBtn"
+                                    title="Selecionar Empresas">
+                                    <i class="ph ph-list-checks"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-area">
+                            <canvas id="consolidatedChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Distribution Chart -->
+                    <div class="distribution-chart-container">
+                        <div class="chart-header-row">
+                            <h4><i class="ph ph-chart-pie-slice"></i> Market Share</h4>
+                        </div>
+                        <div class="chart-area">
+                            <canvas id="distributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="table-container">
+                <table id="clientTable">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="sticky-col">
+                                <div class="client-header-content">
+                                    <span>Cliente</span>
+                                    <div class="header-actions">
+                                        <button class="header-icon-btn" id="openTableFiltersBtn"
+                                            title="Filtrar Clientes e Colunas">
+                                            <i class="ph ph-sliders-horizontal"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th colspan="3" class="group-header group-scale">
+                                <div class="th-content"><i class="ph ph-arrows-out-line-horizontal"></i> Alterações de
+                                    Escala</div>
+                            </th>
+                            <th colspan="3" class="group-header group-trip">
+                                <div class="th-content"><i class="ph ph-airplane-tilt"></i> Viagens Coord.</div>
+                            </th>
+                            <th colspan="3" class="group-header group-usage">
+                                <div class="th-content"><i class="ph ph-chart-line-up"></i> Utilização</div>
+                            </th>
+                            <th colspan="3" class="group-header group-crew">
+                                <div class="th-content"><i class="ph ph-users"></i> Tripulantes</div>
+                            </th>
+                            <th colspan="3" class="group-header group-veh">
+                                <div class="th-content"><i class="ph ph-bus"></i> Veículos</div>
+                            </th>
+                        </tr>
+                        <tr class="sub-headers">
+                            <!-- Alterações de Escala -->
+                            <th id="month1Header">Mês 1</th>
+                            <th id="month2Header">Mês 2</th>
+                            <th id="month3Header">Mês 3</th>
+                            <!-- Viagens -->
+                            <th id="month1HeaderTrips">Mês 1</th>
+                            <th id="month2HeaderTrips">Mês 2</th>
+                            <th id="month3HeaderTrips">Mês 3</th>
+                            <!-- Utilização -->
+                            <th id="month1HeaderUsage">Mês 1</th>
+                            <th id="month2HeaderUsage">Mês 2</th>
+                            <th id="month3HeaderUsage">Mês 3</th>
+                            <!-- Tripulantes -->
+                            <th id="month1HeaderCrew">Mês 1</th>
+                            <th id="month2HeaderCrew">Mês 2</th>
+                            <th id="month3HeaderCrew">Mês 3</th>
+                            <!-- Veículos -->
+                            <th id="month1HeaderVeh">Mês 1</th>
+                            <th id="month2HeaderVeh">Mês 2</th>
+                            <th id="month3HeaderVeh">Mês 3</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Rows will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <div id="clientModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h2 id="modalClientName">Nome do Cliente</h2>
+                    <span id="modalClientId" class="client-id-badge">ID: --</span>
+                </div>
+                <div class="modal-controls">
+                    <div class="modal-filter">
+                        <label>Mês de Referência</label>
+                        <select id="modalMonthFilter">
+                            <!-- JS Populated -->
+                        </select>
+                    </div>
+                    <button class="close-modal" id="closeModalBtn"><i class="ph ph-x"></i></button>
+                </div>
+            </div>
+
+            <div class="modal-body">
+                <!-- KPIs Row -->
+                <div class="modal-kpi-row">
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="ph-fill ph-arrows-left-right"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Alt. Escala</span>
+                            <span class="card-value" id="modalKpiScale">0</span>
+                            <span class="card-trend" id="modalTrendScale">--%</span>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="ph-fill ph-airplane-tilt"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Viagens</span>
+                            <span class="card-value" id="modalKpiTrip">0</span>
+                            <span class="card-trend" id="modalTrendTrip">--%</span>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="ph-fill ph-users"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Tripulantes</span>
+                            <span class="card-value" id="modalKpiCrew">0</span>
+                            <span class="card-trend" id="modalTrendCrew">--%</span>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="ph-fill ph-bus"></i></div>
+                        <div class="card-info">
+                            <span class="card-label">Veículos</span>
+                            <span class="card-value" id="modalKpiVeh">0</span>
+                            <span class="card-trend" id="modalTrendVeh">--%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Chart -->
+                <div class="modal-chart-section">
+                    <div class="chart-header-row">
+                        <h4><i class="ph ph-chart-line-up"></i> Utilização Temporal</h4>
+                    </div>
+                    <div class="chart-area-large">
+                        <canvas id="clientMainChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="tableSettingsModal" class="modal-overlay hidden">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <h3>Configurações da Tabela</h3>
+                <button class="close-modal" id="closeSettingsModalBtn"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="settings-section">
+                    <h4><i class="ph ph-magnifying-glass"></i> Filtrar Clientes</h4>
+                    <div class="search-box full-width" style="margin-bottom: 12px;">
+                        <i class="ph ph-magnifying-glass"></i>
+                        <input type="text" id="modalClientSearch" placeholder="Buscar para selecionar...">
+                    </div>
+                    <div id="modalClientList" class="columns-grid client-selector-grid">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4><i class="ph ph-arrows-down-up"></i> Ordenação</h4>
+                    <div class="sort-options">
+                        <label class="sort-option-item">
+                            <input type="radio" name="sortOption" value="usage" checked class="sort-radio">
+                            <i class="ph ph-chart-line-up"></i>
+                            <span>Por Utilização (Maior → Menor)</span>
+                        </label>
+                        <label class="sort-option-item">
+                            <input type="radio" name="sortOption" value="alpha-asc" class="sort-radio">
+                            <i class="ph ph-sort-ascending"></i>
+                            <span>Alfabética A → Z</span>
+                        </label>
+                        <label class="sort-option-item">
+                            <input type="radio" name="sortOption" value="alpha-desc" class="sort-radio">
+                            <i class="ph ph-sort-descending"></i>
+                            <span>Alfabética Z → A</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4><i class="ph ph-columns"></i> Exibir Colunas</h4>
+                    <div class="columns-grid">
+                        <label class="col-check-item">
+                            <input type="checkbox" checked data-group="group-scale" class="modal-col-check">
+                            <span>Alterações de Escala</span>
+                        </label>
+                        <label class="col-check-item">
+                            <input type="checkbox" checked data-group="group-trip" class="modal-col-check">
+                            <span>Viagens Coord.</span>
+                        </label>
+                        <label class="col-check-item">
+                            <input type="checkbox" checked data-group="group-crew" class="modal-col-check">
+                            <span>Tripulantes</span>
+                        </label>
+                        <label class="col-check-item">
+                            <input type="checkbox" checked data-group="group-veh" class="modal-col-check">
+                            <span>Veículos</span>
+                        </label>
+                        <label class="col-check-item">
+                            <input type="checkbox" checked data-group="group-usage" class="modal-col-check">
+                            <span>Utilização</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="primary-btn full-width" id="applySettingsBtn">Aplicar</button>
+            </div>
+        </div>
+    </div>
+    <div id="chartCompanyModal" class="modal-overlay hidden">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <h3>Selecionar Empresas no Gráfico</h3>
+                <button class="close-modal" id="closeChartCompanyModalBtn"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-hint" style="margin-bottom: 12px; font-size: 13px; color: var(--text-secondary);">
+                    Selecione até 3 empresas para visualizar no gráfico.
+                </p>
+                <div id="chartCompanyList" class="columns-grid client-selector-grid">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="primary-btn full-width" id="applyChartSettingsBtn">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- API Module -->
+    <script src="api.js"></script>
+    <!-- Main Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
